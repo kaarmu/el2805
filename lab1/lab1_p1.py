@@ -3,12 +3,13 @@ import maze as mz
 
 # Description of the maze as a numpy array
 maze = np.array([
-    [0, 0, 1, 0, 0, 0, 0],
-    [0, 0, 1, 0, 0, 0, 0],
-    [0, 0, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0],
-    [0, 1, 1, 1, 1, 1, 0],
-    [0, 0, 0, 0, 0, 2, 0]
+    [0, 0, 1, 0, 0, 0, 0, 0],
+    [0, 0, 1, 0, 0, 1, 0, 0],
+    [0, 0, 1, 0, 0, 1, 1, 1],
+    [0, 0, 1, 0, 0, 1, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 1, 1, 1, 1, 1, 1, 0],
+    [0, 0, 0, 0, 1, 0, 0, 0],
 ])
 # with the convention
 # 0 = empty cell
@@ -24,7 +25,7 @@ env = mz.Maze(maze)
 #
 
 # Finite horizon
-horizon = 10
+horizon = 20
 # Solve the MDP problem with dynamic programming
 V, policy= mz.dynamic_programming(env,horizon);
 
