@@ -1,0 +1,8 @@
+numpy
+jupyter
+matplotlib
+scipy
+jupyterlab
+ipywidgets
+tqdm
+torch
