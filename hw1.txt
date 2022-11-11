@@ -1,0 +1,204 @@
+
+MDP:
+    S = {perfect, worn, broken}
+    A = {repair, keep, buy}
+    R = {
+        perfect, repair: - inf,
+        perfect, keep: 0,
+        perfect, buy: - inf,
+        worn, repair: - C_r,
+        worn, keep: 0,
+        worn, buy: - C_b,
+        broken, repair: - C_r,
+        broken, keep: - inf,
+        broken, buy: - C_b,
+    }
+    P(s' | (s, a)) = {
+        (perfect, repair) -> perfect: 0
+        (perfect, keep) -> perfect: 1-theta
+        (perfect, buy) -> perfect: 1
+
+        (perfect, repair) -> worn: 0
+        (perfect, keep) -> worn: theta
+        (perfect, buy) -> worn: theta
+
+        (perfect, a) -> broken: 0
+
+
+
+        (worn, repair) -> perfect: 1-theta
+        (worn, keep) -> perfect: 0
+        (worn, buy) -> perfect: 1-theta
+
+        (worn, repair) -> worn: theta
+        (worn, keep) -> worn: 1-theta
+        (worn, buy) -> worn: theta
+
+        (worn, repair) -> broken: 0
+        (worn, keep) -> broken: theta
+        (worn, buy) -> broken: 0
+
+
+
+        (broken, repair) -> perfect: 0
+        (broken, keep) -> perfect: 0
+        (broken, buy) -> perfect: 1-theta
+
+        (broken, repair) -> worn: 1-theta
+        (broken, keep) -> worn: 0
+        (broken, buy) -> worn: theta
+
+        (broken, repair) -> broken: theta
+        (broken, keep) -> broken: 0
+        (broken, buy) -> broken: 0
+    }
+
+
+---
+
+
+P(keep) = [
+    [1-theta, 0, 0],
+    [theta, 1-theta, 0],
+]
+
+
+P(repair) = [
+    [0, theta, 1-theta],
+    [0, 0, theta],
+]
+
+
+P(buy) = [
+    [theta, theta, theta],
+    [0, 0, 0],
+]
+
+---
+
+theta = 0.5
+C_b = 8
+C_r = 6
+T = 2
+
+
+u_2(perfect) = 0
+u_2(worn) = 0
+u_2(broken) = 0
+
+---
+
+u_1(perfect) = max(a) {
+    r_1(perfect, a)
+    + p_1(perfect|perfect, a)   * u_2(perfect)
+    + p_1(worn|perfect, a)      * u_2(worn)
+    + p_1(broken|perfect, a)    * u_2(broken)
+} = (0, keep)
+
+u_1(worn) = max(a) {
+    r_1(worn, a)
+    + p_1(perfect|worn, a)   * u_2(perfect)
+    + p_1(worn|worn, a)      * u_2(worn)
+    + p_1(broken|worn, a)    * u_2(broken)
+} = (0, keep)
+
+u_1(broken) = max(a) {
+    r_1(broken, a)
+    + p_1(perfect|broken, a)   * u_2(perfect)
+    + p_1(worn|broken, a)      * u_2(worn)
+    + p_1(broken|broken, a)    * u_2(broken)
+} = (-6, repair)
+
+
+---
+
+u_0(worn) = max(a) {
+    r_0(worn, a)
+    + p_0(perfect|worn, a)   * u_1(perfect) # 0
+    + p_0(worn|worn, a)      * u_1(worn)    # 0
+    + p_0(broken|worn, a)    * u_1(broken)  # -6
+} = {
+    keep:   -3
+    repair: -6 + 0
+    buy:    -8 + 0
+} = (-3, keep)
+
+u_0(broken) = max(a) {
+    r_0(broken, a)
+    + p_0(perfect|broken, a)   * u_1(perfect)   # 0
+    + p_0(worn|broken, a)      * u_1(worn)      # 0
+    + p_0(broken|broken, a)    * u_1(broken)    # -6
+} = {
+    keep:   -inf
+    repair: -6 + -3
+    buy:    -8 + 0
+} = (-8, buy)
+
+
+u0*(Worn) = -3
+
+
+a0*(Broken) = buy
+
+
+---
+
+P(keep) = [
+    [1-theta,   0,          0],
+    [theta,     1-theta,    0],
+    [0,         0,          0]
+]
+
+T=1
+    perfect: 0.5
+    worn: 0.5
+
+T=2
+    perfect: 0.25
+    worn: 0.5
+    broken: 0.25
+
+T=3
+    perfect:
+
+--
+
+
+S = Tosses * Heads (N x N, Heads <= Tosses)
+A = {flip, stop}
+R(s, a) = {
+    s, flip: 0,
+    (heads, tosses), stop: heads/tosses,
+}
+P(s' | s, a) = {
+    s | s, stop: 1
+    (heads+1, tosses+1) | (heads, tosses), flip: 0.5,
+    (heads, tosses+1) | (heads, tosses), flip: 0.5,
+    else: 0
+}
+
+Number of states = 2
+
+---
+
+a) is true
+
+(n+1)/t >= n/t
+
+b) false
+
+(n+1)/t <= n/t
+
+c) false
+
+
+---
+
+
+c)  (C)
+
+---
+
+d) (A)
+
+
