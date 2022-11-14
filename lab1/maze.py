@@ -64,14 +64,23 @@ class Maze:
             self.MOVE_UP: (-1,0),
             self.MOVE_DOWN: (1,0),
         }
-        dims = (moves.keys(),)
+        dims = [tuple(moves.keys())]
         if self.minotaur:
-            dims += dims
+            dims.append(tuple(moves.keys())[1:]) # minotaur cannot stay still
         for action in itertools.product(*dims):
             us = sum(map(moves.get, action), start=tuple())
-            amap[us] = len(actions)
-            actions.append(us)
 
+            # action = (n,m)
+            # actions = [(xp,yp,xm,ym), ...]
+            # amap = { (xp,yp,xm,ym): i, ... }
+
+            # {a: 0, b: 1}
+            # [a, b]
+            # us = c
+            amap[us] = len(actions)
+            # amap = {a:0, b:1, c:2}
+            actions.append(us)
+            # [a, b, c]
         return actions, amap
 
     def __states(self):
@@ -146,12 +155,10 @@ class Maze:
             else:
                 xs = self.states[s]
                 # I know this is horrible; just wanted to try
-                n_empty = sum(
-                    map(lambda xs: self.maze[xs[:2]] != 1,
-                        map(lambda us: add(xs, us),
-                            self.actions))
-                )
-                transition_probabilities[next_s, s, a] = 1/n_empty
+                possib_xs = map(lambda us: add(xs, us),
+                                filter(lambda us: us[:2] == (0, 0), self.actions))
+                n_empty = sum(map(lambda xs: self.maze[xs[:2]] != 1, possib_xs))
+                transition_probabilities[next_s, s, a] = 1/n_empty if n_empty else 0
 
         return transition_probabilities
 
@@ -171,14 +178,14 @@ class Maze:
                     elif self.minotaur and self.states[s][:2] == self.states[s][2:]:
                         rewards[s,a] = self.IMPOSSIBLE_REWARD
                     # Reward for reaching the exit
-                    elif s == next_s and self.maze[self.states[next_s]] == 2:
+                    elif s == next_s and self.maze[self.states[next_s][:2]] == 2:
                         rewards[s,a] = self.GOAL_REWARD
                     # Reward for taking a step to an empty cell that is not the exit
                     else:
                         rewards[s,a] = self.STEP_REWARD
 
                     # If there exists trapped cells with probability 0.5
-                    if random_rewards and self.maze[self.states[next_s]]<0:
+                    if random_rewards and self.maze[self.states[next_s][:2]]<0:
                         row, col = self.states[next_s]
                         # With probability 0.5 the reward is
                         r1 = (1 + abs(self.maze[row, col])) * rewards[s,a]
@@ -300,7 +307,7 @@ def dynamic_programming(env, horizon):
         V[:,t] = np.max(Q,1)
         # The optimal action is the one that maximizes the Q function
         policy[:,t] = np.argmax(Q,1)
-    return V, policy
+    return V, policy.astype(int)
 
 def value_iteration(env, gamma, epsilon):
     """ Solves the shortest path problem using value iteration
@@ -442,7 +449,7 @@ def animate_solution(maze, path):
                 grid.get_celld()[path[i][:2]].set_facecolor(LIGHT_GREEN)
                 grid.get_celld()[path[i][:2]].get_text().set_text('Player is out')
             else:
-                grid.get_celld()[path[i-1][:2]].set_facecolor(col_map[maze[path[i-1]]])
+                grid.get_celld()[path[i-1][:2]].set_facecolor(col_map[maze[path[i-1][:2]]])
                 grid.get_celld()[path[i-1][:2]].get_text().set_text('')
         # Draw Minotaur
         if len(path[i]) > 2:
@@ -453,7 +460,7 @@ def animate_solution(maze, path):
                     grid.get_celld()[path[i][2:]].set_facecolor(LIGHT_RED)
                     grid.get_celld()[path[i][2:]].get_text().set_text('Minotaur is out')
                 else:
-                    grid.get_celld()[path[i-1][2:]].set_facecolor(col_map[maze[path[i-1]]])
+                    grid.get_celld()[path[i-1][2:]].set_facecolor(col_map[maze[path[i-1][2:]]])
                     grid.get_celld()[path[i-1][2:]].get_text().set_text('')
         # Display figure
         display.display(fig)

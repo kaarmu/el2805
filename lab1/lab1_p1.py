@@ -33,7 +33,7 @@ if True:
 
     # Simulate the shortest path starting from position A
     method = 'DynProg';
-    start  = (0,0);
+    start  = (0,0,6,5) if env.minotaur else (0,0);
     path = env.simulate(start, policy, method);
 
     # Show the shortest path
