@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import itertools
-from IPython import display
+import random
+# from IPython import display
 
 def add(xs, ys):
     return tuple(map(sum, zip(xs, ys)))
@@ -41,11 +42,12 @@ class Maze:
     GOAL_REWARD = 0
     IMPOSSIBLE_REWARD = -100
 
-    def __init__(self, maze, weights=None, random_rewards=False, minotaur=False):
+    def __init__(self, maze, weights=None, random_rewards=False, minotaur=False, standstill=False):
         """ Constructor of the environment Maze.
         """
         self.maze                     = maze
         self.minotaur                 = minotaur
+        self.standstill               = standstill
         self.actions, self.amap       = self.__actions()
         self.states, self.smap         = self.__states()
         self.n_actions                = len(self.actions)
@@ -57,18 +59,18 @@ class Maze:
         actions = list()
         amap = dict()
 
-        moves = {
+        self.moves = {
             self.STAY: (0, 0),
             self.MOVE_LEFT: (0,-1),
             self.MOVE_RIGHT: (0, 1),
             self.MOVE_UP: (-1,0),
             self.MOVE_DOWN: (1,0),
         }
-        dims = [tuple(moves.keys())]
-        if self.minotaur:
-            dims.append(tuple(moves.keys())[1:]) # minotaur cannot stay still
+        dims = [tuple(self.moves.keys())]
+        if self.minotaur and not self.standstill:
+            dims.append(tuple(self.moves.keys())[1:]) # minotaur cannot stay still
         for action in itertools.product(*dims):
-            us = sum(map(moves.get, action), start=tuple())
+            us = sum(map(self.moves.get, action), start=tuple())
 
             # action = (n,m)
             # actions = [(xp,yp,xm,ym), ...]
@@ -117,6 +119,7 @@ class Maze:
             col not in col_edge and
             (self.maze[row,col] != 1)
         )
+        ##############################
         if self.minotaur:
             # Get states and actions for person
             xs = self.states[state][2:]
@@ -155,9 +158,12 @@ class Maze:
             else:
                 xs = self.states[s]
                 # I know this is horrible; just wanted to try
-                possib_xs = map(lambda us: add(xs, us),
-                                filter(lambda us: us[:2] == (0, 0), self.actions))
-                n_empty = sum(map(lambda xs: self.maze[xs[:2]] != 1, possib_xs))
+                n_empty = 0
+                for us in self.actions:
+                    if us[:2] == (0,0):
+                        _x, _y = add(xs,us)[2:]
+                        if 0 <= _x < self.maze.shape[0] and 0 <= _y < self.maze.shape[1]:
+                            n_empty += 1
                 transition_probabilities[next_s, s, a] = 1/n_empty if n_empty else 0
 
         return transition_probabilities
@@ -220,7 +226,9 @@ class Maze:
             path.append(start)
             while t < horizon-1:
                 # Move to next state given the policy and the current state
-                next_s = self.__move(s,policy[s,t])
+                action_idxs = self.premove(policy[s,t],s)
+                action_idx = random.choice(action_idxs)
+                next_s = self.__move(s,action_idx)
                 # Add the position in the maze corresponding to the next state
                 # to the path
                 path.append(self.states[next_s])
@@ -250,6 +258,16 @@ class Maze:
                 # Update time and state for next iteration
                 t +=1
         return path
+
+    def premove(self, action_idx, state_idx):
+        action_p = self.actions[action_idx][:2]
+        next_actions = []
+        for action in self.actions:
+            if action[:2] == action_p:
+                next_s_idx = self.__move(state_idx, self.amap[action])
+                if next_s_idx != state_idx: # not a wall
+                    next_actions.append(self.amap[action])
+        return next_actions    
 
 
     def show(self):
