@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import itertools
-import random
 # from IPython import display
 
 def add(xs, ys):
@@ -67,8 +66,8 @@ class Maze:
             self.MOVE_DOWN: (1,0),
         }
         dims = [tuple(self.moves.keys())]
-        if self.minotaur and not self.standstill:
-            dims.append(tuple(self.moves.keys())[1:]) # minotaur cannot stay still
+        if self.minotaur:
+            dims *= 2 # for the minotaur
         for action in itertools.product(*dims):
             us = sum(map(self.moves.get, action), start=tuple())
 
@@ -155,15 +154,18 @@ class Maze:
             next_s = self.__move(s, a)
             if not self.minotaur:
                 transition_probabilities[next_s, s, a] = 1
+            elif not self.standstill and self.actions[a][2:] == self.moves[self.STAY]:
+                transition_probabilities[next_s, s, a] = 0
             else:
                 xs = self.states[s]
                 # I know this is horrible; just wanted to try
                 n_empty = 0
-                for us in self.actions:
-                    if us[:2] == (0,0):
-                        _x, _y = add(xs,us)[2:]
-                        if 0 <= _x < self.maze.shape[0] and 0 <= _y < self.maze.shape[1]:
-                            n_empty += 1
+                for us in filter(lambda us: us[:2] == (0, 0), self.actions):
+                    if not self.standstill and us[2:] == self.moves[self.STAY]:
+                        continue
+                    _x, _y = add(xs,us)[2:]
+                    if 0 <= _x < self.maze.shape[0] and 0 <= _y < self.maze.shape[1]:
+                        n_empty += 1
                 transition_probabilities[next_s, s, a] = 1/n_empty if n_empty else 0
 
         return transition_probabilities
@@ -226,8 +228,10 @@ class Maze:
             path.append(start)
             while t < horizon-1:
                 # Move to next state given the policy and the current state
-                action_idxs = self.premove(policy[s,t],s)
-                action_idx = random.choice(action_idxs)
+                action_idxs, distrution = self.premove(s, policy[s,t])
+                if sum(distrution) != 1:
+                    print(list(self.action[a] for a in action_idxs), distrution)
+                action_idx = np.random.choice(action_idxs, p=distrution)
                 next_s = self.__move(s,action_idx)
                 # Add the position in the maze corresponding to the next state
                 # to the path
@@ -259,15 +263,17 @@ class Maze:
                 t +=1
         return path
 
-    def premove(self, action_idx, state_idx):
-        action_p = self.actions[action_idx][:2]
-        next_actions = []
-        for action in self.actions:
+    def premove(self, s, policy):
+        action_p = self.actions[policy][:2]
+        next_as = []
+        next_ps = []
+        for a, action in enumerate(self.actions):
             if action[:2] == action_p:
-                next_s_idx = self.__move(state_idx, self.amap[action])
-                if next_s_idx != state_idx: # not a wall
-                    next_actions.append(self.amap[action])
-        return next_actions    
+                next_s = self.__move(s, a)
+                p = self.transition_probabilities[next_s, s, a]
+                next_as.append(a)
+                next_ps.append(p)
+        return next_as, next_ps
 
 
     def show(self):

@@ -1,77 +1,72 @@
-import numpy as np
-import maze as mz
+import itertools
+import maze2 as mz
 import matplotlib.pyplot as plt
+from IPython import display
 
-# Description of the maze as a numpy array
-maze = np.array([
-    [0, 0, 1, 0, 0, 0, 0, 0],
-    [0, 0, 1, 0, 0, 1, 0, 0],
-    [0, 0, 1, 0, 0, 1, 1, 1],
-    [0, 0, 1, 0, 0, 1, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 1, 1, 1, 1, 1, 1, 0],
-    [0, 0, 0, 0, 1, 2, 0, 0],
-])
-# with the convention
-# 0 = empty cell
-# 1 = obstacle
-# 2 = exit of the Maze
+def DynProg(env, start, horizons=range(1, 31), num_runs=10_000, animate=False):
 
-# Create an environment maze
-env = mz.Maze(maze, minotaur=True)
-# env.show()
+    assert num_runs
+    method = 'DynProg';
+    results = []
 
-#
-# Dynamic Programming
-#
-results = []
-num_runs = 100
-method = 'DynProg';
-start  = (0,0,6,5) if env.minotaur else (0,0);
+    for horizon in horizons:
 
-for horizon in range(15, 18):
-    print('Horizon: ', horizon)
-    # Solve the MDP problem with dynamic programming
-    V, policy= mz.dynamic_programming(env,horizon);
-    print('DynProg done')
-    # Simulate the shortest path starting from position A
-    
-    # path = env.simulate(start, policy, method);
+        print(f'> Start DynProg with {horizon=}')
+        _, policy = mz.dynamic_programming(env,horizon);
 
-    # Show the shortest path
-    # mz.animate_solution(maze, path)
+        print(f'| Starting {num_runs} runs')
+        num_escapes = 0
+        for _ in range(num_runs):
+            path = env.simulate(start, policy, method);
+            for state in path:
+                if state is env.STATE_GAME_LOST:
+                    break # Minotaur caught you
+                elif state is env.STATE_GAME_WON:
+                    num_escapes += 1
+                    break # Player escaped!
 
-    num_escapes = 0
-    for i in range(0,num_runs):
-        path = env.simulate(start, policy, method);
-        for state in path:
-            if state[:2] == state[2:]:
-                break # Minotaur caught you
-            elif list(state[:2]) == [6,5]:
-                num_escapes += 1
-                break # Player escaped!
-    print("Escaped {} times out of {} runs with horizon {}".format(num_escapes, num_runs, horizon))
+        print(f'| Escaped {num_escapes} times')
+        results.append((horizon, num_escapes/num_runs))
 
-    results.append((horizon, num_escapes/num_runs))
+        if animate:
+            print('| Animating solution of last run')
+            mz.animate_solution(env, path)
 
-plt.plot(*zip(*results))
-plt.show()
+    plt.figure()
+    plt.scatter(*zip(*results))
+    plt.show()
 
-# Value Iteration
-#
+def ValIter(env, start, gammas=(0.95,), epsilons=(1e-4,), num_runs=10_000, animate=False):
 
-if False:
+    assert num_runs
+    method = 'ValIter'
+    results = []
 
-    # Discount Factor
-    gamma   = 0.95;
-    # Accuracy treshold
-    epsilon = 0.0001;
-    V, policy = mz.value_iteration(env, gamma, epsilon)
+    for gamma, epsilon in itertools.product(gammas, epsilons):
 
-    method = 'ValIter';
-    start  = (0,0);
-    path = env.simulate(start, policy, method)
+        print(f'> Start ValIter with {gamma=} and {epsilon=}')
+        _, policy = mz.value_iteration(env, gamma, epsilon)
 
-    # Show the shortest path
-    mz.animate_solution(maze, path)
+        print(f'| Starting {num_runs} runs')
+        num_escapes = 0
+        for _ in range(num_runs):
+            path = env.simulate(start, policy, method)
+            for state in path:
+                if state is env.STATE_GAME_LOST:
+                    break # Minotaur caught you
+                elif state is env.STATE_GAME_WON:
+                    num_escapes += 1
+                    break # Player escaped!
+
+        print(f'| Escaped {num_escapes} times')
+        results.append(num_escapes/num_runs)
+
+        if animate:
+            print('| Animating solution of last run')
+            mz.animate_solution(env, path)
+
+    plt.figure()
+    plt.scatter(*zip(*enumerate(results)))
+    plt.show()
+
 
