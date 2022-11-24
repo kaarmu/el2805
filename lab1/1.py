@@ -2,11 +2,11 @@
 
 Problem 1 of lab 1 in EL2805.
 
-The subproblems (a-h) can be enabled/disabled by switching the if-statements to True/False.
+The subproblems can be enabled/disabled by switching the if-statements to True/False.
 
 Authors: 
     - Kaj Munhoz Arfvidsson (980213-4032)
-    - Erik Andeberg ()
+    - Erik Andeberg (960806-7857)
 """
 
 import maze2 as mz
@@ -142,8 +142,24 @@ if False:
 
 if False:
 
+    ## Poisoned with minotaur (walk-only)
+
     # Create an environment maze
-    env = mz.Maze(maze, minotaur=True, poisoned=30)
+    env = mz.Maze(maze, minotaur=True, standstill=False, poisoned=30)
+
+    # Create start state
+    start = ((0, 0), (6,5))
+
+    ValIter(
+        env,
+        start,
+        num_runs=10_000,
+    )
+
+    ## Poisoned with minotaur (standstill enabled)
+
+    # Create an environment maze
+    env = mz.Maze(maze, minotaur=True, standstill=True, poisoned=30)
 
     # Create start state
     start = ((0, 0), (6,5))

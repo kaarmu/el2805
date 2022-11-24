@@ -225,13 +225,11 @@ class Maze:
             state = self.states[i_s]
             action = self.actions[i_a]
 
-            next_states = self._apply(state, action)
+            # remove invalid states; probability will remain 0
+            next_states = list(filter(self._is_valid_state,
+                                      self._apply(state, action)))
 
             for next_state in next_states:
-
-                # probability will become 0
-                if not self._is_valid_state(next_state):
-                    continue
 
                 # get index of next state
                 j_s = self._state2idx(next_state)
@@ -244,7 +242,8 @@ class Maze:
                 elif self.enabled_turn_based and isinstance(next_state, tuple) and next_state[2] == state[2]:
                     continue
 
-                elif self.enabled_poisoned:
+                # poison is only valid if there exist other states as well
+                elif self.enabled_poisoned and len(next_states) > 1:
                     if state is self.STATE_POISONED:
                         transition_probabilities[j_s, i_s, i_a] = (
                             1 if next_state is self.STATE_GAME_LOST else 0
