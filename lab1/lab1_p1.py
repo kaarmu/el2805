@@ -1,9 +1,34 @@
 import itertools
 import maze2 as mz
+import numpy as np
 import matplotlib.pyplot as plt
 from IPython import display
 
-def DynProg(env, start, horizons=range(1, 31), num_runs=10_000, animate=False):
+# Description of the maze as a numpy array
+maze = np.array([
+    [0, 0, 1, 0, 0, 0, 0, 0],
+    [0, 0, 1, 0, 0, 1, 0, 0],
+    [0, 0, 1, 0, 0, 1, 1, 1],
+    [0, 0, 1, 0, 0, 1, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 1, 1, 1, 1, 1, 1, 0],
+    [0, 0, 0, 0, 1, 2, 0, 0],
+])
+# with the convention
+# 0 = empty cell
+# 1 = obstacle
+# 2 = exit of the Maze
+
+def DynProg(
+    env,
+    start,
+    horizons=range(1, 31),
+    num_runs=10_000,
+    show_results=False,
+    animate=False,
+    animate_track=False,
+    animate_time_step=0.75,
+):
 
     assert num_runs
     method = 'DynProg';
@@ -30,13 +55,24 @@ def DynProg(env, start, horizons=range(1, 31), num_runs=10_000, animate=False):
 
         if animate:
             print('| Animating solution of last run')
-            mz.animate_solution(env, path)
+            mz.animate_solution(env, path, time_step=animate_time_step, track=animate_track)
 
-    plt.figure()
-    plt.scatter(*zip(*results))
-    plt.show()
+    if show_results:
+        plt.figure()
+        plt.scatter(*zip(*results))
 
-def ValIter(env, start, gammas=(0.95,), epsilons=(1e-4,), num_runs=10_000, animate=False):
+
+def ValIter(
+    env,
+    start,
+    gammas=(0.95,),
+    epsilons=(1e-4,),
+    num_runs=10_000,
+    show_results=False,
+    animate=False,
+    animate_track=False,
+    animate_time_step=0.75,
+):
 
     assert num_runs
     method = 'ValIter'
@@ -63,10 +99,9 @@ def ValIter(env, start, gammas=(0.95,), epsilons=(1e-4,), num_runs=10_000, anima
 
         if animate:
             print('| Animating solution of last run')
-            mz.animate_solution(env, path)
+            mz.animate_solution(env, path, time_step=animate_time_step, track=animate_track)
 
-    plt.figure()
-    plt.scatter(*zip(*enumerate(results)))
-    plt.show()
-
+    if show_results:
+        plt.figure()
+        plt.scatter(*zip(*enumerate(results)))
 
