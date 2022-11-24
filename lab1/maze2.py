@@ -63,6 +63,7 @@ class Maze:
         weights=None,
         random_rewards=False,
         minotaur=False,
+        minotaur_moveable=True,
         standstill=False,
         poisoned=0,
         turn_based=False,
@@ -71,16 +72,20 @@ class Maze:
         self.weights                    = weights
         self.enabled_random_rewards     = random_rewards
         self.enabled_minotaur           = minotaur
-        self.enabled_standstill         = standstill
+        self.enabled_minotaur_moveable  = minotaur_moveable
+        self.enabled_standstill         = standstill or not minotaur_moveable
         self.enabled_turn_based         = turn_based
         self.enabled_poisoned           = bool(poisoned)
         self.poison_probability         = 1/poisoned if poisoned else 0
 
-        if self.enabled_turn_based:
-            assert self.enabled_standstill
+        if self.enabled_minotaur_moveable:
+            assert self.enabled_minotaur
 
         if self.enabled_standstill:
             assert self.enabled_minotaur
+
+        if self.enabled_turn_based:
+            assert self.enabled_standstill
 
         self.actions                    = self._actions()
         self.states, self.terminals     = self._states()
@@ -236,7 +241,7 @@ class Maze:
                     transition_probabilities[j_s, i_s, i_a] = 1
 
                 # probability will become 0
-                elif self.enabled_turn_based and state[2] == state[2]:
+                elif self.enabled_turn_based and isinstance(next_state, tuple) and next_state[2] == state[2]:
                     continue
 
                 elif self.enabled_poisoned:
@@ -247,7 +252,7 @@ class Maze:
                     else:
                         transition_probabilities[j_s, i_s, i_a] = (
                             self.poison_probability if next_state is self.STATE_POISONED else
-                            (1 - self.poison_probability) / (len(next_states) - 1)
+                            (1 - self.poison_probability) * 1/ (len(next_states) - 1)
                         )
 
                 else:
@@ -354,11 +359,14 @@ class Maze:
         for exit_state in zip(*np.where(self.maze == self.MAZE_EXIT)):
             if player == exit_state:
                 return [self.STATE_GAME_WON]
-
         if self.enabled_minotaur:
+            all_next_minotaur = []
+
             minotaur = state[1]
             empty, occupied, _ = self._peek_surrounding(minotaur)
-            all_next_minotaur = empty + occupied
+
+            if self.enabled_minotaur_moveable:
+                all_next_minotaur += empty + occupied
 
             if player == minotaur:
                 return [self.STATE_GAME_LOST]
@@ -387,7 +395,9 @@ class Maze:
         else:
             next_states.append((next_player,))
 
-        if self.enabled_poisoned:
+        # next_states = list(filter(self._is_valid_state, next_states))
+
+        if next_states and self.enabled_poisoned:
             next_states.append(self.STATE_POISONED)
 
         return next_states
@@ -403,6 +413,8 @@ class Maze:
         #           self._action2str(self.actions[i_a]),
         #           self.transition_probabilities[:, i_s, i_a][self.transition_probabilities[:, i_s, i_a] != 0],
         #         )
+        if sum(self.transition_probabilities[:, i_s, i_a]) != 1:
+            breakpoint()
         j_s = np.random.choice(range(self.n_states),
                                p=self.transition_probabilities[:, i_s, i_a])
         return self.states[j_s]
@@ -589,7 +601,7 @@ def draw_maze(maze):
         cell.set_height(1.0/rows)
         cell.set_width(1.0/cols)
 
-def animate_solution(env, path):
+def animate_solution(env, path, time_step=0.75, track=False):
 
     # Map a color to each cell in the maze
     col_map = {0: WHITE, 1: BLACK, 2: LIGHT_GREEN, -6: LIGHT_RED, -1: LIGHT_RED}
@@ -656,10 +668,10 @@ def animate_solution(env, path):
         # Display figure
         display.display(fig)
         display.clear_output(wait=True)
-        time.sleep(0.8)
+        time.sleep(time_step)
 
-        # Reset state unless final animation
-        if i+1 != len(path):
+        # Reset state unless final animation or we want to keep the track
+        if i+1 != len(path) and not track:
             # Reset Player
             grid.get_celld()[state[0]].set_facecolor(col_map[env.maze[state[0]]])
             grid.get_celld()[state[0]].get_text().set_text('')
