@@ -45,11 +45,11 @@ class Maze:
 
     # Actions
 
-    ACTION_MOVE_STAY           = object()
-    ACTION_MOVE_LEFT           = object()
-    ACTION_MOVE_RIGHT          = object()
-    ACTION_MOVE_UP             = object()
-    ACTION_MOVE_DOWN           = object()
+    ACTION_MOVE_STAY    = object()
+    ACTION_MOVE_LEFT    = object()
+    ACTION_MOVE_RIGHT   = object()
+    ACTION_MOVE_UP      = object()
+    ACTION_MOVE_DOWN    = object()
 
     # Rewards
 
