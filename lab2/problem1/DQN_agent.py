@@ -15,6 +15,11 @@
 
 # Load packages
 import numpy as np
+import torch
+from torch import nn
+from torch import optim
+
+from DQN_network import Network
 
 class Agent(object):
     ''' Base agent class, used as a parent class
@@ -53,3 +58,64 @@ class RandomAgent(Agent):
         '''
         self.last_action = np.random.randint(0, self.n_actions)
         return self.last_action
+
+
+class DQNAgent(Agent):
+    """
+    Args:
+        n (int): Number of states
+        m (int): Number of actions
+    """
+
+    def __init__(self, n, m, lr=1e-4):
+
+        ### Create network ###
+        self.network = Network(n, m)
+
+        ### Create optimizer ###
+        self.optimizer = optim.Adam(self.network.parameters(),
+                                    lr=lr)
+
+    def forward(self, state: np.ndarray) -> int:
+
+        # Create state tensor, remember to use single precision (torch.float32)
+        state_tensor = torch.tensor(state,
+                                    requires_grad=False,
+                                    dtype=torch.float32)
+
+        # Compute output of the network
+        values = self.network(state_tensor)
+
+        # Pick the action with greatest value
+        return values.argmax().item()
+
+
+    def backward(self, states, actions, rewards, next_states, dones):
+
+        # Training process, set gradients to 0
+        self.optimizer.zero_grad()
+
+        # Compute output of the network given the states batch
+        values = self.network(torch.tensor(np.array(states),
+                                           requires_grad=True,
+                                           dtype=torch.float32))
+
+        # Compute loss function
+        loss = nn.functional.mse_loss(
+            values,
+            torch.zeros_like(values, requires_grad=False)
+        )
+
+        # Compute gradient
+        loss.backward()
+
+        # Clip gradient norm to 1
+        nn.utils.clip_grad_norm_(
+            self.network.parameters(),
+            max_norm=1.,
+        )
+
+        # Perform backward pass (backpropagation)
+        self.optimizer.step()
+
+
