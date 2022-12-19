@@ -14,14 +14,14 @@
 #
 
 # Load packages
+from copy import deepcopy
+
 import numpy as np
 import torch
 from torch import nn
 from torch import optim
 
 from DQN_network import Network
-
-DEV = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class Agent(object):
     ''' Base agent class, used as a parent class
@@ -69,21 +69,26 @@ class DQNAgent(Agent):
         m (int): Number of actions
     """
 
-    def __init__(self, n, m, lr=1e-4):
+    def __init__(self, n, m, lr=1e-4, discount=0.1, device='cpu'):
+
+        self.lr = lr
+        self.discount = discount
+        self.device = device
 
         ### Create network ###
-        self.network = Network(n, m)
+        self.network = Network(n, m).to(device)
+        self.target = Network(n, m).to(device)
 
         ### Create optimizer ###
         self.optimizer = optim.Adam(self.network.parameters(),
-                                    lr=lr)
+                                    lr=self.lr)
 
     def forward(self, state: np.ndarray) -> int:
 
         # Create state tensor, remember to use single precision (torch.float32)
         state_tensor = torch.tensor(state,
                                     requires_grad=False,
-                                    device=DEV,
+                                    device=self.device,
                                     dtype=torch.float32)
 
         # Compute output of the network
@@ -93,20 +98,40 @@ class DQNAgent(Agent):
         return values.argmax().item()
 
 
-    def backward(self, states, actions, rewards, next_states, dones):
+    def backward(self, samples): # states, actions, rewards, next_states, dones):
+
+        states, actions, rewards, next_states, dones = samples
+
+        # y =
+        #   r + discount * max_a target(next_state, a) if done is False
+        #   r
+
+        to_tensor = lambda xs, **kwargs: torch.tensor(np.array(xs),
+                                            device=self.device,
+                                            dtype=torch.float32,
+                                            **kwargs)
+
+        target_values = self.target(to_tensor(next_states,
+                                              requires_grad=True))
+        y = to_tensor(rewards)
+        y += (
+            self.discount
+            * target_values.max(dim=1).values
+            * to_tensor(dones)
+        )
 
         # Training process, set gradients to 0
         self.optimizer.zero_grad()
 
         # Compute output of the network given the states batch
-        values = self.network(torch.tensor(np.array(states),
-                                           requires_grad=True,
-                                           dtype=torch.float32))
+        values = self.network(to_tensor(states, requires_grad=True))
 
         # Compute loss function
         loss = nn.functional.mse_loss(
             values,
-            torch.zeros_like(values, requires_grad=False)
+            torch.zeros_like(values,
+                             requires_grad=False,
+                             device=self.device)
         )
 
         # Compute gradient

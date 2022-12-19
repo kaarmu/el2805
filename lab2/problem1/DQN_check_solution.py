@@ -56,15 +56,15 @@ for i in EPISODES:
     EPISODES.set_description("Episode {}".format(i))
     # Reset enviroment data
     done = False
-    state = env.reset()
+    state, _ = env.reset()
     total_episode_reward = 0.
     while not done:
         # Get next state and reward.  The done variable
         # will be True if you reached the goal position,
         # False otherwise
-        q_values = model(torch.tensor([state]))
-        _, action = torch.max(q_values, axis=1)
-        next_state, reward, done, _ = env.step(action.item())
+        q_values = model(torch.tensor(state))
+        action = torch.argmax(q_values)
+        next_state, reward, done, _, _ = env.step(action.item())
 
         # Update episode reward
         total_episode_reward += reward

@@ -15,6 +15,8 @@
 #
 
 # Load packages
+import time
+
 import numpy as np
 import gym
 import torch
@@ -26,20 +28,28 @@ from torch import nn
 from DQN_agent import DQNAgent
 from DQN_network import Network
 from DQN_buffer import Experience, ExperienceReplayBuffer
-from util import running_average
+from util import EpsilonGreedy, running_average
 
 # Import and initialize the discrete Lunar Laner Environment
 env = gym.make('LunarLander-v2')
 env.reset()
 
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+torch.device(DEVICE)
+
 # Parameters
-TRAINING = True
-N_episodes = 100                             # Number of episodes
+do_render = False
+N_episodes = 200                             # Number of episode
 discount_factor = 0.95                       # Value of the discount factor
 n_ep_running_average = 50                    # Running average of 50 episodes
 n_actions = env.action_space.n               # Number of available actions
 dim_state = len(env.observation_space.high)  # State dimensionality
-buf_sz = 1000
+
+buf_sz = 10000
+n_samples = 10
+lr = 1e-1
+eps_max = 0.99
+eps_min = 0.05
 
 # We will use these variables to compute the average episodic reward and
 # the average number of steps per episode
@@ -51,7 +61,14 @@ buffer = ExperienceReplayBuffer(maximum_length=buf_sz)
 buffer.fill_rand(env)
 
 # Agent initialization
-agent = DQNAgent(dim_state, n_actions)
+agent = DQNAgent(dim_state, n_actions, lr=lr, device=DEVICE)
+
+# Policy strategy
+epsilon = EpsilonGreedy(eps_min, eps_max, 0.9*N_episodes, 'linear')
+
+# Set rendering mode
+if do_render:
+    env.render_mode('human')
 
 # trange is an alternative to range in python, from the tqdm library
 # It shows a nice progression bar that you can update with useful information
@@ -63,10 +80,21 @@ for i in EPISODES:
     state, _ = env.reset()
     total_episode_reward = 0.
     t = 0
+    eps = epsilon(i)
     while not done:
 
-        # Take a random action
-        action = agent.forward(state)
+        # Render environment
+        if do_render:
+            env.render()
+            time.sleep(0.01)
+
+        # Get action
+        if np.random.random() > eps:
+            # Take the best action
+            action = agent.forward(state)
+        else:
+            # Take a random action
+            action = np.random.randint(0, n_actions)
 
         # Get next state and reward.  The done variable
         # will be True if you reached the goal position,
@@ -79,13 +107,12 @@ for i in EPISODES:
         )
 
         ## TRAINING ##
-        if TRAINING:
 
-            # Sample a batch of 3 elements
-            samples = buffer.sample_batch(n=3)
+        # Sample a batch of 3 elements
+        samples = buffer.sample_batch(n=n_samples)
 
-            # Perform backward pass
-            agent.backward(*samples)
+        # Perform backward pass
+        agent.backward(samples)
 
         # Update episode reward
         total_episode_reward += buffer[-1].reward
@@ -110,6 +137,8 @@ for i in EPISODES:
         running_average(episode_reward_list, n_ep_running_average)[-1],
         running_average(episode_number_of_steps, n_ep_running_average)[-1]))
 
+# Save network
+torch.save(agent.network, 'neural-network-1.pth')
 
 # Plot Rewards and steps
 fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(16, 9))
@@ -119,6 +148,7 @@ ax[0].plot([i for i in range(1, N_episodes+1)], running_average(
 ax[0].set_xlabel('Episodes')
 ax[0].set_ylabel('Total reward')
 ax[0].set_title('Total Reward vs Episodes')
+ax[0].set_ylim(-500, 100)
 ax[0].legend()
 ax[0].grid(alpha=0.3)
 
@@ -128,6 +158,7 @@ ax[1].plot([i for i in range(1, N_episodes+1)], running_average(
 ax[1].set_xlabel('Episodes')
 ax[1].set_ylabel('Total number of steps')
 ax[1].set_title('Total number of steps vs Episodes')
+ax[1].set_ylim(0, 500)
 ax[1].legend()
 ax[1].grid(alpha=0.3)
 plt.show()
