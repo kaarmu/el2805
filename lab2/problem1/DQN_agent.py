@@ -83,13 +83,15 @@ class DQNAgent(Agent):
         self.optimizer = optim.Adam(self.network.parameters(),
                                     lr=self.lr)
 
+    def to_tensor(self, xs, **kw):
+        kwargs = dict(device=self.device, dtype=torch.float32)
+        kwargs |= kw
+        return torch.tensor(np.array(xs), **kwargs)
+
     def forward(self, state: np.ndarray) -> int:
 
         # Create state tensor, remember to use single precision (torch.float32)
-        state_tensor = torch.tensor(state,
-                                    requires_grad=False,
-                                    device=self.device,
-                                    dtype=torch.float32)
+        state_tensor = self.to_tensor(state)
 
         # Compute output of the network
         values = self.network(state_tensor)
@@ -106,32 +108,32 @@ class DQNAgent(Agent):
         #   r + discount * max_a target(next_state, a) if done is False
         #   r
 
-        to_tensor = lambda xs, **kwargs: torch.tensor(np.array(xs),
-                                            device=self.device,
-                                            dtype=torch.float32,
-                                            **kwargs)
-
-        target_values = self.target(to_tensor(next_states,
-                                              requires_grad=True))
-        y = to_tensor(rewards)
+        target_values = self.target(self.to_tensor(next_states))
+        y = self.to_tensor(rewards)
         y += (
             self.discount
             * target_values.max(dim=1).values
-            * to_tensor(dones)
+            * (1 - self.to_tensor(dones))       # invert dones
         )
 
         # Training process, set gradients to 0
         self.optimizer.zero_grad()
 
         # Compute output of the network given the states batch
-        values = self.network(to_tensor(states, requires_grad=True))
+        values = self.network(self.to_tensor(states,
+                                             requires_grad=True))
+
+        # Collect values given by action that was taken
+        values = torch.gather(
+            values,
+            1,
+            self.to_tensor(actions, dtype=None).view(-1, 1),
+        )
 
         # Compute loss function
         loss = nn.functional.mse_loss(
-            values,
-            torch.zeros_like(values,
-                             requires_grad=False,
-                             device=self.device)
+            values.view(-1),
+            y
         )
 
         # Compute gradient

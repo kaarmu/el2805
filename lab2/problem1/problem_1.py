@@ -58,7 +58,7 @@ episode_number_of_steps = []   # this list contains the number of steps per epis
 
 ### Create Experience replay buffer ###
 buffer = ExperienceReplayBuffer(maximum_length=buf_sz)
-buffer.fill_rand(env)
+buffer.fill_rand(env, buf_sz//2) # fill half, any good reasoning?
 
 # Agent initialization
 agent = DQNAgent(dim_state, n_actions, lr=lr, device=DEVICE)
