@@ -21,6 +21,8 @@ from torch import optim
 
 from DQN_network import Network
 
+DEV = 'cuda' if torch.cuda.is_available() else 'cpu'
+
 class Agent(object):
     ''' Base agent class, used as a parent class
 
@@ -81,6 +83,7 @@ class DQNAgent(Agent):
         # Create state tensor, remember to use single precision (torch.float32)
         state_tensor = torch.tensor(state,
                                     requires_grad=False,
+                                    device=DEV,
                                     dtype=torch.float32)
 
         # Compute output of the network
