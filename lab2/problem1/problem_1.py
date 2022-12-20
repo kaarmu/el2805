@@ -22,34 +22,36 @@ import gym
 import torch
 import matplotlib.pyplot as plt
 from tqdm import trange
-from torch import optim
-from torch import nn
 
 from DQN_agent import DQNAgent
-from DQN_network import Network
 from DQN_buffer import Experience, ExperienceReplayBuffer
 from util import EpsilonGreedy, running_average
 
 # Import and initialize the discrete Lunar Laner Environment
-env = gym.make('LunarLander-v2')
+# Switch render_mode to 'human' for visualization
+scenario = 'LunarLander-v2'
+env = gym.make(scenario, render_mode=None)
 env.reset()
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 torch.device(DEVICE)
 
 # Parameters
-do_render = False
-N_episodes = 200                             # Number of episode
-discount_factor = 0.95                       # Value of the discount factor
-n_ep_running_average = 50                    # Running average of 50 episodes
-n_actions = env.action_space.n               # Number of available actions
-dim_state = len(env.observation_space.high)  # State dimensionality
+n_actions = env.action_space.n                  # Number of available actions
+dim_state = len(env.observation_space.high)     # State dimensionality
 
-buf_sz = 10000
-n_samples = 10
-lr = 1e-1
-eps_max = 0.99
-eps_min = 0.05
+num_episodes = 400                              # Number of episode
+buffer_size = 20000                             # Size of Experience Replay Buffer
+buffer_fill = buffer_size // 4                  # How much to fill buffer with random experiences
+batch_size = 100                                # Size of training batch
+target_update_freq = buffer_size // batch_size  # How often should target network update
+discount_factor = 0.99                          # Value of the discount factor
+learning_rate = 1e-3                            # Learning rate
+eps_max = 0.99                                  # Max epsilon (initial value before decay)
+eps_min = 0.05                                  # Min epsilon (final value after decay)
+n_ep_running_average = 50                       # Running average of 50 episodes
+hidden_layer_size = 64                          # Number of neurons in hidden layer
+t_max = 1000                                    # Maximum allowed number of steps
 
 # We will use these variables to compute the average episodic reward and
 # the average number of steps per episode
@@ -57,22 +59,28 @@ episode_reward_list = []       # this list contains the total reward per episode
 episode_number_of_steps = []   # this list contains the number of steps per episode
 
 ### Create Experience replay buffer ###
-buffer = ExperienceReplayBuffer(maximum_length=buf_sz)
-buffer.fill_rand(env, buf_sz//2) # fill half, any good reasoning?
+print('Creating experience replay buffer', end='\r', flush=True)
+buffer = ExperienceReplayBuffer(maximum_length=buffer_size)
+buffer.fill_rand(scenario, buffer_fill)
 
 # Agent initialization
-agent = DQNAgent(dim_state, n_actions, lr=lr, device=DEVICE)
+print('Initializing agent', end='\r', flush=True)
+agent = DQNAgent(dim_state,
+                 n_actions,
+                 h=hidden_layer_size,
+                 lr=learning_rate,
+                 discount=discount_factor,
+                 device=DEVICE)
 
 # Policy strategy
-epsilon = EpsilonGreedy(eps_min, eps_max, 0.9*N_episodes, 'linear')
-
-# Set rendering mode
-if do_render:
-    env.render_mode('human')
+epsilon = EpsilonGreedy(eps_min,
+                        eps_max,
+                        0.9*num_episodes,   # normally 90%-95% of num_episodes
+                        'linear')
 
 # trange is an alternative to range in python, from the tqdm library
 # It shows a nice progression bar that you can update with useful information
-EPISODES = trange(N_episodes, desc='Episode: ', leave=True)
+EPISODES = trange(num_episodes, desc='Episode: ', leave=True)
 
 for i in EPISODES:
     # Reset enviroment data and initialize variables
@@ -81,20 +89,26 @@ for i in EPISODES:
     total_episode_reward = 0.
     t = 0
     eps = epsilon(i)
-    while not done:
+    rands = np.random.random(t_max)
+
+    while not done and t < t_max:
+
+        # print(f'Episode {i=}, {t=}, {total_episode_reward=:0.2f}', end='\r', flush=True)
 
         # Render environment
-        if do_render:
-            env.render()
+        # env.render() will be called automatically by env.step
+        # when in render_mode='human'.
+        # https://stackoverflow.com/questions/73845576/whenever-i-try-to-use-env-render-for-openaigym-i-get-assertionerror
+        if env.render_mode:
             time.sleep(0.01)
 
         # Get action
-        if np.random.random() > eps:
+        if rands[t] > eps:
             # Take the best action
             action = agent.forward(state)
         else:
             # Take a random action
-            action = np.random.randint(0, n_actions)
+            action = env.action_space.sample()
 
         # Get next state and reward.  The done variable
         # will be True if you reached the goal position,
@@ -108,57 +122,87 @@ for i in EPISODES:
 
         ## TRAINING ##
 
-        # Sample a batch of 3 elements
-        samples = buffer.sample_batch(n=n_samples)
+        # Sample a batch of elements
+        samples = buffer.sample_batch(batch_size)
+
+        ## MODIFICATION CER ##
+        samples_mod = list(zip(*samples)) + [(state, action, reward, next_state, done)]
+        samples = zip(*samples_mod)
 
         # Perform backward pass
         agent.backward(samples)
+
+        # Set target network equal to main network
+        if (t+1) % target_update_freq == 0:
+            agent.update_target()
 
         # Update episode reward
         total_episode_reward += buffer[-1].reward
 
         # Update state for next iteration
         state = next_state
-        t+= 1
+        t += 1
 
     # Append episode reward and total number of steps
     episode_reward_list.append(total_episode_reward)
     episode_number_of_steps.append(t)
 
-    # Close environment
-    env.close()
-
     # Updates the tqdm update bar with fresh information
     # (episode number, total reward of the last episode, total number of Steps
     # of the last episode, average reward, average number of steps)
+    avg_r = running_average(episode_reward_list, n_ep_running_average)[-1]
+    avg_t = running_average(episode_number_of_steps, n_ep_running_average)[-1]
     EPISODES.set_description(
-        "Episode {} - Reward/Steps: {:.1f}/{} - Avg. Reward/Steps: {:.1f}/{}".format(
-        i, total_episode_reward, t,
-        running_average(episode_reward_list, n_ep_running_average)[-1],
-        running_average(episode_number_of_steps, n_ep_running_average)[-1]))
+        ' - '.join([
+            f'Episode {i:03}',
+            f'r/t: {total_episode_reward:02.01f}/{t:03}',
+            f'Avg. r/t: {avg_r:02.01f}/{avg_t:03}',
+            f'Len. b: {len(buffer):04}',
+        ])
+        # "Episode {} - r/t: {:02.1f}/{} - Avg. r/t: {:02.1f}/{} - Len. b: {}".format(
+        #     i, total_episode_reward, t, avg_r, avg_t, len(buffer),
+        # )
+    )
+
+# Close environment
+env.close()
 
 # Save network
 torch.save(agent.network, 'neural-network-1.pth')
+with open('dqn-parameters.txt', 'a') as f:
+    f.write(f'{num_episodes = }         # Number of episode')
+    f.write(f'{buffer_size = }          # Size of Experience Replay Buffer')
+    f.write(f'{buffer_fill = }          # How much to fill buffer with random experiences')
+    f.write(f'{batch_size = }           # Size of training batch')
+    f.write(f'{target_update_freq = }   # How often should target network update')
+    f.write(f'{discount_factor = }      # Value of the discount factor')
+    f.write(f'{learning_rate = }        # Learning rate')
+    f.write(f'{eps_max = }              # Max epsilon (initial value before decay)')
+    f.write(f'{eps_min = }              # Min epsilon (final value after decay)')
+    f.write(f'{n_ep_running_average = } # Running average of 50 episodes')
+    f.write(f'{hidden_layer_size = }    # Number of neurons in hidden layer')
+    f.write(f'{t_max = }                # Maximum allowed number of steps')
 
 # Plot Rewards and steps
 fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(16, 9))
-ax[0].plot([i for i in range(1, N_episodes+1)], episode_reward_list, label='Episode reward')
-ax[0].plot([i for i in range(1, N_episodes+1)], running_average(
+ax[0].plot([i for i in range(1, num_episodes+1)], episode_reward_list, label='Episode reward')
+ax[0].plot([i for i in range(1, num_episodes+1)], running_average(
     episode_reward_list, n_ep_running_average), label='Avg. episode reward')
 ax[0].set_xlabel('Episodes')
 ax[0].set_ylabel('Total reward')
 ax[0].set_title('Total Reward vs Episodes')
-ax[0].set_ylim(-500, 100)
+ax[0].set_ylim(-400, 400)
 ax[0].legend()
 ax[0].grid(alpha=0.3)
 
-ax[1].plot([i for i in range(1, N_episodes+1)], episode_number_of_steps, label='Steps per episode')
-ax[1].plot([i for i in range(1, N_episodes+1)], running_average(
+ax[1].plot([i for i in range(1, num_episodes+1)], episode_number_of_steps, label='Steps per episode')
+ax[1].plot([i for i in range(1, num_episodes+1)], running_average(
     episode_number_of_steps, n_ep_running_average), label='Avg. number of steps per episode')
 ax[1].set_xlabel('Episodes')
 ax[1].set_ylabel('Total number of steps')
 ax[1].set_title('Total number of steps vs Episodes')
-ax[1].set_ylim(0, 500)
+ax[1].set_ylim(0, 1100)
 ax[1].legend()
 ax[1].grid(alpha=0.3)
+plt.savefig('dqn-performance.png')
 plt.show()

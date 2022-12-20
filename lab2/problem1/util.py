@@ -28,3 +28,4 @@ class EpsilonGreedy:
         span = self.eps_max - self.eps_min
         rate = (k-1)/(self.z - 1)
         return max(self.eps_min, self.eps_max - span*rate)
+

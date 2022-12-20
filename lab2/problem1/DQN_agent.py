@@ -69,19 +69,22 @@ class DQNAgent(Agent):
         m (int): Number of actions
     """
 
-    def __init__(self, n, m, lr=1e-4, discount=0.1, device='cpu'):
+    def __init__(self, n, m, h=8, lr=1e-4, discount=0.1, device='cpu'):
 
         self.lr = lr
         self.discount = discount
         self.device = device
 
         ### Create network ###
-        self.network = Network(n, m).to(device)
-        self.target = Network(n, m).to(device)
+        self.network = Network(n, m, h).to(device)
+        self.target = Network(n, m, h).to(device)
 
         ### Create optimizer ###
         self.optimizer = optim.Adam(self.network.parameters(),
                                     lr=self.lr)
+
+    def update_target(self):
+        self.target = deepcopy(self.network)
 
     def to_tensor(self, xs, **kw):
         kwargs = dict(device=self.device, dtype=torch.float32)

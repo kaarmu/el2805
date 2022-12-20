@@ -1,5 +1,6 @@
 from collections import namedtuple, deque
 import numpy as np
+import gym
 
 from DQN_agent import RandomAgent
 
@@ -59,12 +60,15 @@ class ExperienceReplayBuffer:
         # tuple of 5 elements where each element is a list of n elements.
         return zip(*batch)
 
-    def fill_rand(self, env, n=None):
+    def fill_rand(self, scenario, n=None):
+
+        env = gym.make(scenario)
 
         if n is None:
             n = self.buffer.maxlen
 
-        agent = RandomAgent(env.action_space.n)
+        n_actions = env.action_space.n                  # Number of available actions
+        agent = RandomAgent(n_actions)
 
         state, _ = env.reset()
 
@@ -81,4 +85,6 @@ class ExperienceReplayBuffer:
             self.append(
                 Experience(state, action, reward, next_state, done)
             )
+
+            state = env.reset()[0] if done else next_state
 
