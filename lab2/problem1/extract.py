@@ -1,92 +1,58 @@
-# Copyright [2020] [KTH Royal Institute of Technology] Licensed under the
-# Educational Community License, Version 2.0 (the "License"); you may
-# not use this file except in compliance with the License. You may
-# obtain a copy of the License at http://www.osedu.org/licenses/ECL-2.0
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the License is distributed on an "AS IS"
-# BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
-# or implied. See the License for the specific language governing
-# permissions and limitations under the License.
-#
-# Course: EL2805 - Reinforcement Learning - Lab 2 Problem 1
-# Code author: [Alessio Russo - alessior@kth.se]
-# Last update: 6th October 2020, by alessior@kth.se
-#
 
-# Load packages
+
 import numpy as np
-import gym
 import torch
-from tqdm import trange
+import matplotlib.pyplot as plt
 
-def running_average(x, N):
-    ''' Function used to compute the running average
-        of the last N elements of a vector x
-    '''
-    if len(x) >= N:
-        y = np.copy(x)
-        y[N-1:] = np.convolve(x, np.ones((N, )) / N, mode='valid')
-    else:
-        y = np.zeros_like(x)
-    return y
+file_path = r'episode200\neural-network-1.pth'
 
-# Load model
 try:
-    model = torch.load('neural-network-1.pth').to('cpu')
+    model = torch.load(file_path).to('cpu')
+    print('File {} loaded!'.format(file_path))
     print('Network model: {}'.format(model))
 except:
-    print('File neural-network-1.pth not found!')
+    print(f'{file_path} not found!')
     exit(-1)
 
-# Import and initialize Mountain Car Environment
-env = gym.make('LunarLander-v2', render_mode='human')
-env.reset()
 
-# Parameters
-N_EPISODES = 50            # Number of episodes to run for trainings
-CONFIDENCE_PASS = 50
+n_points = 100  # Points per axis
 
-# Reward
-episode_reward_list = []  # Used to store episodes reward
+y = np.linspace(0, 1.5, n_points)
+w = np.linspace(-np.pi, np.pi, n_points)
+Y, W = np.meshgrid(y, w)
 
-# Simulate episodes
-print('Checking solution...')
-EPISODES = trange(N_EPISODES, desc='Episode: ', leave=True)
-for i in EPISODES:
-    EPISODES.set_description("Episode {}".format(i))
-    # Reset enviroment data
-    done = False
-    state, _ = env.reset()
-    total_episode_reward = 0.
-    while not done:
-        # Get next state and reward.  The done variable
-        # will be True if you reached the goal position,
-        # False otherwise
-        q_values = model(torch.tensor(state))
-        action = torch.argmax(q_values)
-        next_state, reward, done, _, _ = env.step(action.item())
+states = np.zeros((n_points**2, 8))
+states[:, 1] = Y.flatten()
+states[:, 4] = W.flatten()
 
-        # Update episode reward
-        total_episode_reward += reward
+Q = model(torch.tensor(states, dtype=torch.float32)) # Extract desired Q values
+max_values, max_indices  = torch.max(Q, 1)
+Q_max = max_values.detach().numpy().reshape(n_points, n_points)
+Q_argmax = max_indices.detach().numpy().reshape(n_points, n_points)
 
-        # Update state for next iteration
-        state = next_state
+cmap_type = 'viridis'
+fig = plt.figure()
+fig.set_size_inches(12, 6)
+fig.suptitle('{} points'.format(n_points**2))
 
-    # Append episode reward
-    episode_reward_list.append(total_episode_reward)
+ax = fig.add_subplot(121, projection='3d')
+ax.set_title('Maximum Q values')
+ax.plot_surface(Y, W, Q_max, cmap=cmap_type)
+ax.contour(Y, W, Q_max, zdir='x', offset=-0.1, levels=3, cmap=cmap_type)
+ax.contour(Y, W, Q_max, zdir='y', offset=3.4, levels=3, cmap=cmap_type)
+ax.set_xlabel('Altitude (y)')
+ax.set_ylabel('Angle ($\omega$)')
+ax.set_zlabel('Maximum Q value')
 
-    # Close environment
-    env.close()
+ax = fig.add_subplot(122, projection='3d')
+ax.scatter(Y, W, Q_argmax, s=1, c=Q_argmax, cmap=cmap_type)
+ax.set_title('Best actions')
+ax.set_xlabel('Altitude (y)')
+ax.set_ylabel('Angle ($\omega$)')
+ax.set_zlabel('Best action')
+ax.set_zticks([0, 1, 2, 3])
+ax.set_zticklabels(['Nothing', 'Left', 'Main', 'Right'])
 
-avg_reward = np.mean(episode_reward_list)
-confidence = np.std(episode_reward_list) * 1.96 / np.sqrt(N_EPISODES)
+plt.show()
 
 
-print('Policy achieves an average total reward of {:.1f} +/- {:.1f} with confidence 95%.'.format(
-                avg_reward,
-                confidence))
-
-if avg_reward - confidence >= CONFIDENCE_PASS:
-    print('Your policy passed the test!')
-else:
-    print("Your policy did not pass the test! The average reward of your policy needs to be greater than {} with 95% confidence".format(CONFIDENCE_PASS))
