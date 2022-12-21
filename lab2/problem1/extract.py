@@ -4,11 +4,11 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 
-file_path = r'episode200\neural-network-1.pth'
+file_path = r'sol\neural-network-1.pth'
 
 try:
     model = torch.load(file_path).to('cpu')
-    print('File {} loaded!'.format(file_path))
+    print('Loaded {}'.format(file_path))
     print('Network model: {}'.format(model))
 except:
     print(f'{file_path} not found!')
