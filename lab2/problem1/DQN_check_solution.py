@@ -39,7 +39,7 @@ except:
     exit(-1)
 
 # Import and initialize Mountain Car Environment
-env = gym.make('LunarLander-v2')
+env = gym.make('LunarLander-v2', render_mode='human')
 env.reset()
 
 # Parameters

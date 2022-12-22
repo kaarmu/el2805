@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 
-file_path = r'sol\neural-network-1.pth'
+file_path = 'neural-network-1.pth'
 
 try:
     model = torch.load(file_path).to('cpu')
