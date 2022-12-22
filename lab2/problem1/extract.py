@@ -53,6 +53,7 @@ ax.set_zlabel('Best action')
 ax.set_zticks([0, 1, 2, 3])
 ax.set_zticklabels(['Nothing', 'Left', 'Main', 'Right'])
 
+plt.savefig('Q-plot.png')
 plt.show()
 
 

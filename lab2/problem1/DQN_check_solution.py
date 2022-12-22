@@ -75,8 +75,8 @@ for i in EPISODES:
     # Append episode reward
     episode_reward_list.append(total_episode_reward)
 
-    # Close environment
-    env.close()
+# Close environment
+env.close()
 
 avg_reward = np.mean(episode_reward_list)
 confidence = np.std(episode_reward_list) * 1.96 / np.sqrt(N_EPISODES)
