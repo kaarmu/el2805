@@ -49,7 +49,7 @@ discount_factor = 0.99                          # Value of the discount factor
 learning_rate = 5e-4                            # Learning rate
 eps_max = 0.99                                  # Max epsilon (initial value before decay)
 eps_min = 0.05                                  # Min epsilon (final value after decay)
-eps_decay = 0.7 * num_episodes                  # Number of epsiodes for decay time (typically 90%-95% of num_episodes)
+eps_decay = 0.5 * num_episodes                  # Number of epsiodes for decay time (typically 90%-95% of num_episodes)
 n_ep_running_average = 50                       # Running average of 50 episodes
 two_hidden_layers = True                        # Enable two hidden layer (normally one)
 hidden_layer_size = 64                          # Number of neurons in hidden layer
@@ -155,8 +155,8 @@ for i in EPISODES:
     EPISODES.set_description(
         ' - '.join([
             f'Episode {i:03}',
-            f'r/t: {total_episode_reward:+05.01f}/{t:03}',
-            f'Avg. r/t: {avg_r:+05.01f}/{avg_t:03}',
+            f'r/t: {total_episode_reward:+06.01f}/{t:03}',
+            f'Avg. r/t: {avg_r:+06.01f}/{avg_t:03}',
         ])
     )
 
