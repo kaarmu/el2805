@@ -54,6 +54,7 @@ n_ep_running_average = 50                       # Running average of 50 episodes
 two_hidden_layers = True                        # Enable two hidden layer (normally one)
 hidden_layer_size = 64                          # Number of neurons in hidden layer
 t_max = 1000                                    # Maximum allowed number of steps
+do_cer = True                                   # Enable CER modification
 
 # We will use these variables to compute the average episodic reward and
 # the average number of steps per episode
@@ -126,8 +127,9 @@ for i in EPISODES:
         samples = buffer.sample_batch(batch_size)
 
         ## MODIFICATION CER ##
-        samples_mod = list(zip(*samples)) + [(state, action, reward, next_state, done)]
-        samples = zip(*samples_mod)
+        if do_cer:
+            samples_mod = list(zip(*samples)) + [(state, action, reward, next_state, done)]
+            samples = zip(*samples_mod)
 
         # Perform backward pass
         agent.backward(samples)
@@ -181,6 +183,7 @@ with open('dqn-parameters.txt', 'w') as f:
         f'{two_hidden_layers = }'.ljust(40)     + '# Enable two hidden layer (normally one)',
         f'{hidden_layer_size = }'.ljust(40)     + '# Number of neurons in hidden layer',
         f'{t_max = }'.ljust(40)                 + '# Maximum allowed number of steps',
+        f'{do_cer = }'.ljust(40)                + '# Enable CER modification',
     ])
     f.write(s + '\n')
 
