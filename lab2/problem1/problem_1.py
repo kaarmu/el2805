@@ -46,9 +46,10 @@ buffer_fill = buffer_size // 4                  # How much to fill buffer with r
 batch_size = 100                                # Size of training batch
 target_update_freq = buffer_size // batch_size  # How often should target network update
 discount_factor = 0.99                          # Value of the discount factor
-learning_rate = 1e-3                            # Learning rate
+learning_rate = 5e-4                            # Learning rate
 eps_max = 0.99                                  # Max epsilon (initial value before decay)
 eps_min = 0.05                                  # Min epsilon (final value after decay)
+eps_decay = 0.5 * num_episodes                  # Number of epsiodes for decay time (typically 90%-95% of num_episodes)
 n_ep_running_average = 50                       # Running average of 50 episodes
 hidden_layer_size = 64                          # Number of neurons in hidden layer
 t_max = 1000                                    # Maximum allowed number of steps
@@ -73,10 +74,7 @@ agent = DQNAgent(dim_state,
                  device=DEVICE)
 
 # Policy strategy
-epsilon = EpsilonGreedy(eps_min,
-                        eps_max,
-                        0.9*num_episodes,   # normally 90%-95% of num_episodes
-                        'linear')
+epsilon = EpsilonGreedy(eps_min, eps_max, eps_decay, 'linear')
 
 # trange is an alternative to range in python, from the tqdm library
 # It shows a nice progression bar that you can update with useful information
