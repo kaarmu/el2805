@@ -82,11 +82,10 @@ avg_reward = np.mean(episode_reward_list)
 confidence = np.std(episode_reward_list) * 1.96 / np.sqrt(N_EPISODES)
 
 
-print('Policy achieves an average total reward of {:.1f} +/- {:.1f} with confidence 95%.'.format(
-                avg_reward,
-                confidence))
-
-if avg_reward - confidence >= CONFIDENCE_PASS:
-    print('Your policy passed the test!')
-else:
-    print("Your policy did not pass the test! The average reward of your policy needs to be greater than {} with 95% confidence".format(CONFIDENCE_PASS))
+with open('dqn-solution.txt', 'w') as f:
+    s = '\n'.join([
+        f'Policy achieves an average total reward of {avg_reward:.1f} +/- {confidence:.1f} with confidence 95%.',
+        'Your policy passed the test!' if avg_reward - confidence >= CONFIDENCE_PASS else
+        f'Your policy did not pass the test! The average reward of your policy needs to be greater than {CONFIDENCE_PASS} with 95% confidence'
+    ])
+    f.write(s + '\n')

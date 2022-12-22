@@ -155,13 +155,9 @@ for i in EPISODES:
     EPISODES.set_description(
         ' - '.join([
             f'Episode {i:03}',
-            f'r/t: {total_episode_reward:02.01f}/{t:03}',
-            f'Avg. r/t: {avg_r:02.01f}/{avg_t:03}',
-            f'Len. b: {len(buffer):04}',
+            f'r/t: {total_episode_reward:+05.01f}/{t:03}',
+            f'Avg. r/t: {avg_r:+05.01f}/{avg_t:03}',
         ])
-        # "Episode {} - r/t: {:02.1f}/{} - Avg. r/t: {:02.1f}/{} - Len. b: {}".format(
-        #     i, total_episode_reward, t, avg_r, avg_t, len(buffer),
-        # )
     )
 
 # Close environment
@@ -169,21 +165,24 @@ env.close()
 
 # Save network
 torch.save(agent.network, 'neural-network-1.pth')
-with open('dqn-parameters.txt', 'a') as f:
-    f.write(f'\n{num_episodes = }         # Number of episode')
-    f.write(f'\n{buffer_size = }          # Size of Experience Replay Buffer')
-    f.write(f'\n{buffer_fill = }          # How much to fill buffer with random experiences')
-    f.write(f'\n{batch_size = }           # Size of training batch')
-    f.write(f'\n{target_update_freq = }   # How often should target network update')
-    f.write(f'\n{discount_factor = }      # Value of the discount factor')
-    f.write(f'\n{learning_rate = }        # Learning rate')
-    f.write(f'\n{eps_max = }              # Max epsilon (initial value before decay)')
-    f.write(f'\n{eps_min = }              # Min epsilon (final value after decay)')
-    f.write(f'\n{eps_decay = }            # Number of epsiodes for decay time (typically 90%-95% of num_episodes)')
-    f.write(f'\n{n_ep_running_average = } # Running average of 50 episodes')
-    f.write(f'\n{two_hidden_layers = }    # Enable two hidden layer (normally one)')
-    f.write(f'\n{hidden_layer_size = }    # Number of neurons in hidden layer')
-    f.write(f'\n{t_max = }                # Maximum allowed number of steps')
+with open('dqn-parameters.txt', 'w') as f:
+    s = '\n'.join([
+        f'{num_episodes = }'.ljust(40)          + '# Number of episode',
+        f'{buffer_size = }'.ljust(40)           + '# Size of Experience Replay Buffer',
+        f'{buffer_fill = }'.ljust(40)           + '# How much to fill buffer with random experiences',
+        f'{batch_size = }'.ljust(40)            + '# Size of training batch',
+        f'{target_update_freq = }'.ljust(40)    + '# How often should target network update',
+        f'{discount_factor = }'.ljust(40)       + '# Value of the discount factor',
+        f'{learning_rate = }'.ljust(40)         + '# Learning rate',
+        f'{eps_max = }'.ljust(40)               + '# Max epsilon (initial value before decay)',
+        f'{eps_min = }'.ljust(40)               + '# Min epsilon (final value after decay)',
+        f'{eps_decay = }'.ljust(40)             + '# Number of epsiodes for decay time (typically 90%-95% of num_episodes)',
+        f'{n_ep_running_average = }'.ljust(40)  + '# Running average of 50 episodes',
+        f'{two_hidden_layers = }'.ljust(40)     + '# Enable two hidden layer (normally one)',
+        f'{hidden_layer_size = }'.ljust(40)     + '# Number of neurons in hidden layer',
+        f'{t_max = }'.ljust(40)                 + '# Maximum allowed number of steps',
+    ])
+    f.write(s + '\n')
 
 # Plot Rewards and steps
 fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(16, 9))
