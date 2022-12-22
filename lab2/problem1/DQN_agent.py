@@ -89,7 +89,7 @@ class DQNAgent(Agent):
 
     def to_tensor(self, xs, **kw):
         kwargs = dict(device=self.device, dtype=torch.float32)
-        kwargs |= kw
+        kwargs.update(kw)
         return torch.tensor(np.array(xs), **kwargs)
 
     def forward(self, state: np.ndarray) -> int:

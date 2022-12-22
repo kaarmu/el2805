@@ -181,7 +181,7 @@ with open('dqn-parameters.txt', 'a') as f:
     f.write(f'\n{eps_min = }              # Min epsilon (final value after decay)')
     f.write(f'\n{eps_decay = }            # Number of epsiodes for decay time (typically 90%-95% of num_episodes)')
     f.write(f'\n{n_ep_running_average = } # Running average of 50 episodes')
-    f.wriet(f'\n{two_hidden_layers = }    # Enable two hidden layer (normally one)')
+    f.write(f'\n{two_hidden_layers = }    # Enable two hidden layer (normally one)')
     f.write(f'\n{hidden_layer_size = }    # Number of neurons in hidden layer')
     f.write(f'\n{t_max = }                # Maximum allowed number of steps')
 
