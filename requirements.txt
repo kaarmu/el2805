@@ -6,3 +6,4 @@ jupyterlab
 ipywidgets
 tqdm
 torch
+gym[box2d]
