@@ -21,7 +21,7 @@ import torch
 from torch import nn
 from torch import optim
 
-from DQN_network import Network
+from DQN_network import Network, Network2
 
 class Agent(object):
     ''' Base agent class, used as a parent class
@@ -69,15 +69,16 @@ class DQNAgent(Agent):
         m (int): Number of actions
     """
 
-    def __init__(self, n, m, h=8, lr=1e-4, discount=0.1, device='cpu'):
+    def __init__(self, n, m, h=8, lr=1e-4, discount=0.1, device='cpu', two_layers=False):
 
         self.lr = lr
         self.discount = discount
         self.device = device
 
         ### Create network ###
-        self.network = Network(n, m, h).to(device)
-        self.target = Network(n, m, h).to(device)
+        Net = Network2 if two_layers else Network
+        self.network = Net(n, m, h).to(device)
+        self.target = Net(n, m, h).to(device)
 
         ### Create optimizer ###
         self.optimizer = optim.Adam(self.network.parameters(),

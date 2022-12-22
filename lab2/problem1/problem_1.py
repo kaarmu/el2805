@@ -49,9 +49,10 @@ discount_factor = 0.99                          # Value of the discount factor
 learning_rate = 5e-4                            # Learning rate
 eps_max = 0.99                                  # Max epsilon (initial value before decay)
 eps_min = 0.05                                  # Min epsilon (final value after decay)
-eps_decay = 0.9 * num_episodes                  # Number of epsiodes for decay time (typically 90%-95% of num_episodes)
+eps_decay = 0.7 * num_episodes                  # Number of epsiodes for decay time (typically 90%-95% of num_episodes)
 n_ep_running_average = 50                       # Running average of 50 episodes
-hidden_layer_size = 12                          # Number of neurons in hidden layer
+two_hidden_layers = True                        # Enable two hidden layer (normally one)
+hidden_layer_size = 64                          # Number of neurons in hidden layer
 t_max = 1000                                    # Maximum allowed number of steps
 
 # We will use these variables to compute the average episodic reward and
@@ -71,6 +72,7 @@ agent = DQNAgent(dim_state,
                  h=hidden_layer_size,
                  lr=learning_rate,
                  discount=discount_factor,
+                 two_layers=two_hidden_layers,
                  device=DEVICE)
 
 # Policy strategy
@@ -177,7 +179,9 @@ with open('dqn-parameters.txt', 'a') as f:
     f.write(f'\n{learning_rate = }        # Learning rate')
     f.write(f'\n{eps_max = }              # Max epsilon (initial value before decay)')
     f.write(f'\n{eps_min = }              # Min epsilon (final value after decay)')
+    f.write(f'\n{eps_decay = }            # Number of epsiodes for decay time (typically 90%-95% of num_episodes)')
     f.write(f'\n{n_ep_running_average = } # Running average of 50 episodes')
+    f.wriet(f'\n{two_hidden_layers = }    # Enable two hidden layer (normally one)')
     f.write(f'\n{hidden_layer_size = }    # Number of neurons in hidden layer')
     f.write(f'\n{t_max = }                # Maximum allowed number of steps')
 
