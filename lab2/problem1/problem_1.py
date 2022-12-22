@@ -51,7 +51,7 @@ eps_max = 0.99                                  # Max epsilon (initial value bef
 eps_min = 0.05                                  # Min epsilon (final value after decay)
 eps_decay = 0.9 * num_episodes                  # Number of epsiodes for decay time (typically 90%-95% of num_episodes)
 n_ep_running_average = 50                       # Running average of 50 episodes
-hidden_layer_size = 64                          # Number of neurons in hidden layer
+hidden_layer_size = 12                          # Number of neurons in hidden layer
 t_max = 1000                                    # Maximum allowed number of steps
 
 # We will use these variables to compute the average episodic reward and
