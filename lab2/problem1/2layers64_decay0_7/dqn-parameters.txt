@@ -1,0 +1,26 @@
+
+num_episodes = 400         # Number of episode
+buffer_size = 20000          # Size of Experience Replay Buffer
+buffer_fill = 5000          # How much to fill buffer with random experiences
+batch_size = 100           # Size of training batch
+target_update_freq = 200   # How often should target network update
+discount_factor = 0.99      # Value of the discount factor
+learning_rate = 0.0005        # Learning rate
+eps_max = 0.99              # Max epsilon (initial value before decay)
+eps_min = 0.05              # Min epsilon (final value after decay)
+eps_decay = 280.0            # Number of epsiodes for decay time (typically 90%-95% of num_episodes)
+n_ep_running_average = 50 # Running average of 50 episodes
+num_episodes = 400         # Number of episode
+buffer_size = 20000          # Size of Experience Replay Buffer
+buffer_fill = 5000          # How much to fill buffer with random experiences
+batch_size = 100           # Size of training batch
+target_update_freq = 200   # How often should target network update
+discount_factor = 0.99      # Value of the discount factor
+learning_rate = 0.0005        # Learning rate
+eps_max = 0.99              # Max epsilon (initial value before decay)
+eps_min = 0.05              # Min epsilon (final value after decay)
+eps_decay = 280.0            # Number of epsiodes for decay time (typically 90%-95% of num_episodes)
+n_ep_running_average = 50 # Running average of 50 episodes
+two_hidden_layers = True    # Enable two hidden layer (normally one)
+hidden_layer_size = 64    # Number of neurons in hidden layer
+t_max = 1000                # Maximum allowed number of steps
