@@ -40,7 +40,7 @@ torch.device(DEVICE)
 n_actions = env.action_space.n                  # Number of available actions
 dim_state = len(env.observation_space.high)     # State dimensionality
 
-num_episodes = 400                              # Number of episode
+num_episodes = 800                              # Number of episode
 buffer_size = 20000                             # Size of Experience Replay Buffer
 buffer_fill = buffer_size // 4                  # How much to fill buffer with random experiences
 batch_size = 100                                # Size of training batch
@@ -49,7 +49,7 @@ discount_factor = 0.99                          # Value of the discount factor
 learning_rate = 5e-4                            # Learning rate
 eps_max = 0.99                                  # Max epsilon (initial value before decay)
 eps_min = 0.05                                  # Min epsilon (final value after decay)
-eps_decay = 0.7 * num_episodes                  # Number of epsiodes for decay time (typically 90%-95% of num_episodes)
+eps_decay = 0.9 * num_episodes                  # Number of epsiodes for decay time (typically 90%-95% of num_episodes)
 n_ep_running_average = 50                       # Running average of 50 episodes
 two_hidden_layers = True                        # Enable two hidden layer (normally one)
 hidden_layer_size = 64                          # Number of neurons in hidden layer
