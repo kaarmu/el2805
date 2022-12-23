@@ -41,8 +41,8 @@ n_actions = env.action_space.n                  # Number of available actions
 dim_state = len(env.observation_space.high)     # State dimensionality
 
 num_episodes = 400                              # Number of episode
-buffer_size = 15000                             # Size of Experience Replay Buffer
-buffer_fill = buffer_size // 3                  # How much to fill buffer with random experiences
+buffer_size = 20000                             # Size of Experience Replay Buffer
+buffer_fill = buffer_size // 4                  # How much to fill buffer with random experiences
 batch_size = 100                                # Size of training batch
 target_update_freq = buffer_size // batch_size  # How often should target network update
 discount_factor = 0.99                          # Value of the discount factor
