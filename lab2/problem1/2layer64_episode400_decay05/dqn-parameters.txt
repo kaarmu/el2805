@@ -1,4 +1,3 @@
-
 num_episodes = 400         # Number of episode
 buffer_size = 20000          # Size of Experience Replay Buffer
 buffer_fill = 5000          # How much to fill buffer with random experiences
