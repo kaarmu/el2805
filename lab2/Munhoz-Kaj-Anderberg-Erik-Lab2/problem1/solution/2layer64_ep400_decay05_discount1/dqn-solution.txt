@@ -1,0 +1,2 @@
+Policy achieves an average total reward of -241.0 +/- 6.2 with confidence 95%.
+Your policy did not pass the test! The average reward of your policy needs to be greater than 50 with 95% confidence
