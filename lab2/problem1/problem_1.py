@@ -41,8 +41,8 @@ n_actions = env.action_space.n                  # Number of available actions
 dim_state = len(env.observation_space.high)     # State dimensionality
 
 num_episodes = 400                              # Number of episode
-buffer_size = 20000                             # Size of Experience Replay Buffer
-buffer_fill = buffer_size // 4                  # How much to fill buffer with random experiences
+buffer_size = 15000                             # Size of Experience Replay Buffer
+buffer_fill = buffer_size // 3                  # How much to fill buffer with random experiences
 batch_size = 100                                # Size of training batch
 target_update_freq = buffer_size // batch_size  # How often should target network update
 discount_factor = 0.99                          # Value of the discount factor
@@ -169,21 +169,21 @@ env.close()
 torch.save(agent.network, 'neural-network-1.pth')
 with open('dqn-parameters.txt', 'w') as f:
     s = '\n'.join([
-        f'{num_episodes = }'.ljust(40)          + '# Number of episode',
-        f'{buffer_size = }'.ljust(40)           + '# Size of Experience Replay Buffer',
-        f'{buffer_fill = }'.ljust(40)           + '# How much to fill buffer with random experiences',
-        f'{batch_size = }'.ljust(40)            + '# Size of training batch',
-        f'{target_update_freq = }'.ljust(40)    + '# How often should target network update',
-        f'{discount_factor = }'.ljust(40)       + '# Value of the discount factor',
-        f'{learning_rate = }'.ljust(40)         + '# Learning rate',
-        f'{eps_max = }'.ljust(40)               + '# Max epsilon (initial value before decay)',
-        f'{eps_min = }'.ljust(40)               + '# Min epsilon (final value after decay)',
-        f'{eps_decay = }'.ljust(40)             + '# Number of epsiodes for decay time (typically 90%-95% of num_episodes)',
-        f'{n_ep_running_average = }'.ljust(40)  + '# Running average of 50 episodes',
-        f'{two_hidden_layers = }'.ljust(40)     + '# Enable two hidden layer (normally one)',
-        f'{hidden_layer_size = }'.ljust(40)     + '# Number of neurons in hidden layer',
-        f'{t_max = }'.ljust(40)                 + '# Maximum allowed number of steps',
-        f'{do_cer = }'.ljust(40)                + '# Enable CER modification',
+        f'{num_episodes = : <40}'          '# Number of episode',
+        f'{buffer_size = : <40}'           '# Size of Experience Replay Buffer',
+        f'{buffer_fill = : <40}'           '# How much to fill buffer with random experiences',
+        f'{batch_size = : <40}'            '# Size of training batch',
+        f'{target_update_freq = : <40}'    '# How often should target network update',
+        f'{discount_factor = : <40}'       '# Value of the discount factor',
+        f'{learning_rate = : <40}'         '# Learning rate',
+        f'{eps_max = : <40}'               '# Max epsilon (initial value before decay)',
+        f'{eps_min = : <40}'               '# Min epsilon (final value after decay)',
+        f'{eps_decay = : <40}'             '# Number of epsiodes for decay time (typically 90%-95% of num_episodes)',
+        f'{n_ep_running_average = : <40}'  '# Running average of 50 episodes',
+        f'{two_hidden_layers = : <40}'     '# Enable two hidden layer (normally one)',
+        f'{hidden_layer_size = : <40}'     '# Number of neurons in hidden layer',
+        f'{t_max = : <40}'                 '# Maximum allowed number of steps',
+        f'{do_cer = : <40}'                '# Enable CER modification',
     ])
     f.write(s + '\n')
 

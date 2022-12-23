@@ -39,7 +39,7 @@ except:
     exit(-1)
 
 # Import and initialize Mountain Car Environment
-env = gym.make('LunarLander-v2', render_mode='human')
+env = gym.make('LunarLander-v2', render_mode=None)
 env.reset()
 
 # Parameters
@@ -88,4 +88,5 @@ with open('dqn-solution.txt', 'w') as f:
         'Your policy passed the test!' if avg_reward - confidence >= CONFIDENCE_PASS else
         f'Your policy did not pass the test! The average reward of your policy needs to be greater than {CONFIDENCE_PASS} with 95% confidence'
     ])
+    print(s)
     f.write(s + '\n')
